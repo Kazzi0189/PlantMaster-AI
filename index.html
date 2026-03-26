@@ -747,7 +747,7 @@
                         dbInstance = null;
                     }
                 }
-                const request = indexedDB.open('PlantMasterDB', 2);
+                const request = indexedDB.open('PlantMasterDB_TEST', 2);
                 request.onupgradeneeded = (e) => {
                     const db = e.target.result;
                     if (!db.objectStoreNames.contains('plants')) {
