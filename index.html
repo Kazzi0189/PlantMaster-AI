@@ -1484,27 +1484,40 @@
                     tasksDiv.innerHTML += generalBtnHTML;
                 }
 
-                // --- 🎬 YOUTUBE VIDEONÁVODY ---
-                const ytHTML = `
-        <div style="margin-top:20px; padding:15px; background:#fff3e0; border:1px solid #ffcc80; border-radius:10px;">
-            <div style="font-weight:bold; color:#e65100; margin-bottom:10px; display:flex; align-items:center; gap:5px;">
-                🎬 Videonávody (YouTube)
+                // --- 🎥 YOUTUBE NÁVODY A ULOŽENÁ VIDEA (Původní oblíbený design) ---
+                let ytHTML = `
+        <div style="margin-top:25px; border-top:1px solid #ccc; padding-top:15px;">
+            <h3 style="margin-top:0;">🎥 YouTube Návody</h3>
+            <div style="display:flex; gap:8px; margin-bottom:15px; flex-wrap:wrap;">
+                <button onclick="searchYT('${plant.name} Řez')" style="padding:8px 12px; border-radius:8px; border:1px solid #ccc; background:white; font-weight:bold; cursor:pointer;">✂️ Řez</button>
+                <button onclick="searchYT('${plant.name} Hnojení')" style="padding:8px 12px; border-radius:8px; border:1px solid #ccc; background:white; font-weight:bold; cursor:pointer;">🌱 Hnojení</button>
+                <button onclick="searchYT('${plant.name} Škůdci a postřiky')" style="padding:8px 12px; border-radius:8px; border:1px solid #ccc; background:white; font-weight:bold; cursor:pointer;">🐛 Škůdci</button>
+                <button onclick="searchYT('${plant.name} Přesazování')" style="padding:8px 12px; border-radius:8px; border:1px solid #ccc; background:white; font-weight:bold; cursor:pointer;">🪴 Přesazování</button>
             </div>
-            <select id="yt-task-select" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ffb74d; margin-bottom:10px; outline:none;">
-                <option value="jak pěstovat">Obecné (Jak pěstovat)</option>
-                <option value="jak správně zalévat">Zálivka</option>
-                <option value="kdy a jak hnojit">Hnojení</option>
-                <option value="jak přesadit">Přesazování</option>
-                <option value="jak stříhat řez">Řez a tvarování</option>
-                <option value="jak množit řízkováním">Množení</option>
-                <option value="choroby a škůdci">Choroby a škůdci</option>
-                <option value="jak zazimovat">Zimování</option>
-            </select>
-            <button onclick="searchYouTube('${plant.name}')" style="width:100%; background:#ff0000; color:white; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">
-                ▶️ Najít videa
-            </button>
+            <div style="display:flex; gap:8px; margin-bottom:20px;">
+                <input type="text" id="yt-custom-query" placeholder="Vlastní dotaz na YT..." style="flex:1; padding:10px; border-radius:8px; border:1px solid #ccc; outline:none;">
+                <button onclick="searchYT(document.getElementById('yt-custom-query').value)" style="background:var(--yt, #f44336); color:white; border:none; padding:0 15px; border-radius:8px; font-weight:bold; cursor:pointer;">Hledat</button>
+            </div>
         </div>`;
+
+                // Vykreslení uložených videí z Inboxu
+                if (plant.savedVideos && plant.savedVideos.length > 0) {
+                    ytHTML += `<div style="margin-bottom: 25px;">`;
+                    plant.savedVideos.forEach((v, idx) => {
+                        let vId = v.includes('v=') ? v.split('v=')[1].split('&')[0] : v.split('youtu.be/')[1]?.split('?')[0];
+                        if (vId) {
+                            ytHTML += `<div style="margin-bottom:15px;">
+                        <iframe width="100%" height="200" src="https://www.youtube.com/embed/${vId}" frameborder="0" allowfullscreen style="border-radius:12px;"></iframe>
+                        <button class="btn-sm-action" style="color:var(--warn); border-color:var(--warn);" onclick="deleteVideo(${idx})">🗑️ Odebrat video</button>
+                    </div>`;
+                        }
+                    });
+                    ytHTML += `</div>`;
+                }
+
+                // Přilepíme to hned pod úkoly
                 tasksDiv.innerHTML += ytHTML;
+
 
                 // --- AI PAMĚŤ ---
                 const detBox = document.getElementById('ai-mem-detective');
@@ -1562,12 +1575,32 @@
             };
         }
 
-        // --- 🎬 FUNKCE PRO VYHLEDÁVÁNÍ NA YOUTUBE ---
-        function searchYouTube(plantName) {
-            const task = document.getElementById('yt-task-select').value;
-            const query = encodeURIComponent(`${plantName} ${task}`);
-            window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
+        // --- POMOCNÉ FUNKCE PRO YOUTUBE (Základ ze staré verze) ---
+
+        function searchYT(query) {
+            if (!query) return;
+            window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`, '_blank');
         }
+
+        async function deleteVideo(idx) {
+            if (!confirm('Opravdu chcete odebrat toto uložené video?')) return;
+            const db = await getDB();
+            const tx = db.transaction('plants', 'readwrite');
+            const store = tx.objectStore('plants');
+            const req = store.get(currentPlantId);
+
+            req.onsuccess = () => {
+                const plant = req.result;
+                if (plant.savedVideos && plant.savedVideos.length > idx) {
+                    plant.savedVideos.splice(idx, 1);
+                    store.put(plant);
+                    tx.oncomplete = () => {
+                        openDetail(currentPlantId); // Okamžitě překreslí okno
+                    };
+                }
+            };
+        }
+
 
         // --- 📅 EXPORT DO SYSTÉMOVÉHO KALENDÁŘE ---
 
