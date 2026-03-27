@@ -1418,6 +1418,10 @@
                             <button onclick="toggleWateringPause(${plant.id}, ${isPaused}, event)" style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid ${isPaused ? '#4caf50' : '#ff9800'}; background:${isPaused ? '#e8f5e9' : '#fff3e0'}; color:${isPaused ? '#2e7d32' : '#e65100'}; font-size:0.9rem; font-weight:bold; cursor:pointer;">
                                 ${isPaused ? '▶️ Sledování pozastaveno - ZAPNOUT' : '⏸️ Zapnout režim "Dovolená/Sklizeno"'}
                             </button>
+                            
+                            <button onclick="exportToCalendar(${plant.id}, event)" style="width:100%; margin-top:8px; padding:8px 12px; border-radius:8px; border:1px solid #1976d2; background:#ffffff; color:#1565c0; font-size:0.9rem; font-weight:bold; cursor:pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                                📅 Přidat do systémového kalendáře
+                            </button>
                         </div>
                     </div>
                 `;
