@@ -1168,6 +1168,8 @@
         }
         // --- 🌧️ HROMADNÁ ZÁLIVKA: Samotná akce ---
 
+        // --- 🌧️ HROMADNÁ ZÁLIVKA: Samotná akce ---
+
         async function confirmBulkWatering() {
             const category = document.getElementById('bulk-water-category').value;
             const dnes = new Date().toLocaleDateString('cs-CZ');
@@ -1182,9 +1184,11 @@
                 let updatedCount = 0;
 
                 plants.forEach(p => {
-                    // Zkontrolujeme, zda rostlina patří do vybrané kategorie (staré i nové uložení)
+                    // --- NOVÁ LOGIKA: Kontrola kategorie včetně "Zalít vše" ---
                     let matchCat = false;
-                    if (Array.isArray(p.category)) {
+                    if (category === 'all') {
+                        matchCat = true; // Pokud vybral "Vše", rovnou pouštíme dál
+                    } else if (Array.isArray(p.category)) {
                         matchCat = p.category.includes(category);
                     } else {
                         matchCat = p.category === category;
@@ -1209,13 +1213,23 @@
                 tx.oncomplete = () => {
                     closeBulkWaterModal();
                     if (updatedCount > 0) {
-                        alert(`Úspěšně zalito ${updatedCount} rostlin v kategorii "${category}".`);
+                        // Hezká česká zpráva podle toho, jestli se zalévalo vše, nebo jen část
+                        if (category === 'all') {
+                            alert(`Úspěšně zalito ${updatedCount} rostlin napříč všemi kategoriemi.`);
+                        } else {
+                            alert(`Úspěšně zalito ${updatedCount} rostlin v kategorii "${category}".`);
+                        }
+
                         // Uložíme dnešní datum pro zobrazení záchranné brzdy
                         localStorage.setItem('bulkWateringUndoDate', dnes);
                         checkUndoButtonVisibility();
                         renderPlants(); // Překreslíme seznam, aby zmizely červené štítky
                     } else {
-                        alert(`V kategorii "${category}" aktuálně nemáte žádné rostliny.`);
+                        if (category === 'all') {
+                            alert("Aktuálně v aplikaci nemáte žádné rostliny.");
+                        } else {
+                            alert(`V kategorii "${category}" aktuálně nemáte žádné rostliny.`);
+                        }
                     }
                 };
             };
@@ -2306,6 +2320,7 @@ Odpověz POUZE čistým JSON formátem bez dalších textů.`;
 
             <select id="bulk-water-category"
                 style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; outline: none; background: white; margin-bottom: 20px;">
+                <option value="all">Všechny kategorie (Zalít vše)</option>
                 <option value="Pokojové">Pokojové</option>
                 <option value="Zelenina">Zelenina</option>
                 <option value="Ovoce">Ovoce</option>
