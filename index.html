@@ -2356,7 +2356,7 @@ Odpověz POUZE čistým JSON formátem bez dalších textů.`;
             renderGlobalPlannerContent();
         }
 
-        // Hlavní funkce pro vykreslení (hledání v databázi)
+        // Hlavní funkce pro vykreslení (hledání v databázi) - OPRAVENÁ VERZE
         async function renderGlobalPlannerContent() {
             const monthNames = ["Leden", "Únor", "Březen", "Duben", "Květen", "Červen", "Červenec", "Srpen", "Září", "Říjen", "Listopad", "Prosinec"];
             document.getElementById('global-month-name').innerText = monthNames[globalPlannerMonth];
@@ -2383,11 +2383,13 @@ Odpověz POUZE čistým JSON formátem bez dalších textů.`;
                 let totalTasksCount = 0;
 
                 allPlants.forEach(plant => {
-                    if (!plant.tasks || plant.tasks.length === 0) return;
+                    // 🟢 TADY JE OPRAVA: Přísný filtr! Pokud úkoly neexistují, nebo to NENÍ seznam, přeskočíme to.
+                    if (!plant.tasks || !Array.isArray(plant.tasks) || plant.tasks.length === 0) return;
 
                     let plantTasksHTML = '';
                     let hasTaskForThisMonth = false;
 
+                    // Teď už máme 100% jistotu, že forEach proběhne bez chyby
                     plant.tasks.forEach(task => {
                         const isForViewedMonth = Array.isArray(task.months) ? task.months.includes(globalPlannerMonth) : task.month === globalPlannerMonth;
 
