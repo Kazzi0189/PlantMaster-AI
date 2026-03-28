@@ -657,7 +657,7 @@
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
                 <button class="btn-full" style="background:var(--det); margin:0;" onclick="callAI('detective')">🔎 Určit
                     odrůdu</button>
-                <button class="btn-full" style="background:var(--doc); margin:0;" onclick="callAI('doctor')">🩺
+                <button class="btn-full" style="background:var(--doc); margin:0;" onclick="openAIDoctorModal()">🩺
                     Zdraví</button>
             </div>
 
@@ -2290,6 +2290,123 @@ Odpověz POUZE čistým JSON formátem bez dalších textů.`;
                 style="width:100%; padding:14px; background:#4CAF50; color:white; border:none; border-radius:8px; font-size:1.1rem; font-weight:bold; cursor:pointer; margin-top:15px;">Rozumím,
                 jdeme na to! 🚀</button>
         </div>
+        style="background:white; max-width:600px; margin:20px auto; border-radius:15px; padding:25px; position:relative;
+        font-family:sans-serif; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+        <button onclick="closeGuide()"
+            style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:1.5rem; cursor:pointer; opacity:0.5;">❌</button>
+        <h2 style="margin-top:0; color:#4CAF50; border-bottom:2px solid #eee; padding-bottom:10px;">👋 Vítejte v
+            PlantMasteru!</h2>
+
+        <p style="font-size:0.95rem; line-height:1.5; color:#333;">Tato aplikace je váš osobní chytrý zahradník.
+            Tady je rychlý přehled funkcí:</p>
+
+        <div style="margin-bottom:15px;">
+            <h3 style="margin:10px 0 5px 0; font-size:1.1rem;">🌱 První kroky a fotky</h3>
+            <p style="margin:0; font-size:0.9rem; color:#555;">Přidejte rostlinu tlačítkem na hlavní obrazovce.
+                Umělá inteligence ji pozná a vytvoří jí profil.</p>
+        </div>
+
+        <div style="margin-bottom:15px;">
+            <h3 style="margin:10px 0 5px 0; font-size:1.1rem;">💧 Péče a úkoly</h3>
+            <p style="margin:0; font-size:0.9rem; color:#555;">Sledujte zálivku a plňte úkoly. Pokud se spletete,
+                stačí smazat záznam v <strong>Historii</strong> a úkol se vrátí zpět (Undo).</p>
+        </div>
+
+        <div style="margin-bottom:15px;">
+            <h3 style="margin:10px 0 5px 0; font-size:1.1rem;">🤖 AI Asistent v detailu</h3>
+            <p style="margin:0; font-size:0.9rem; color:#555;">
+                <strong>🔎 Rozpoznat odrůdu:</strong> Určí přesný druh z fotek.<br>
+                <strong>🩺 AI Doktor:</strong> Zkontroluje zdraví a navrhne léčbu.<br>
+                <strong>💡 Hledat přípravky:</strong> Doporučí hnojiva a postřiky.
+            </p>
+        </div>
+
+        <button onclick="closeGuide()"
+            style="width:100%; padding:14px; background:#4CAF50; color:white; border:none; border-radius:8px; font-size:1.1rem; font-weight:bold; cursor:pointer; margin-top:15px;">Rozumím,
+            jdeme na to! 🚀</button>
+    </div>
+    style="background:white; max-width:600px; margin:20px auto; border-radius:15px; padding:25px; position:relative;
+    font-family:sans-serif; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+    <button onclick="closeGuide()"
+        style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:1.5rem; cursor:pointer; opacity:0.5;">❌</button>
+    <h2 style="margin-top:0; color:#4CAF50; border-bottom:2px solid #eee; padding-bottom:10px;">👋 Vítejte v
+        PlantMasteru!</h2>
+
+    <p style="font-size:0.95rem; line-height:1.5; color:#333;">Tato aplikace je váš osobní chytrý zahradník.
+        Tady je rychlý přehled funkcí:</p>
+
+    <div style="margin-bottom:15px;">
+        <h3 style="margin:10px 0 5px 0; font-size:1.1rem;">🌱 První kroky a fotky</h3>
+        <p style="margin:0; font-size:0.9rem; color:#555;">Přidejte rostlinu tlačítkem na hlavní obrazovce.
+            Umělá inteligence ji pozná a vytvoří jí profil.</p>
+    </div>
+
+    <div style="margin-bottom:15px;">
+        <h3 style="margin:10px 0 5px 0; font-size:1.1rem;">💧 Péče a úkoly</h3>
+        <p style="margin:0; font-size:0.9rem; color:#555;">Sledujte zálivku a plňte úkoly. Pokud se spletete,
+            stačí smazat záznam v <strong>Historii</strong> a úkol se vrátí zpět (Undo).</p>
+    </div>
+
+    <div style="margin-bottom:15px;">
+        <h3 style="margin:10px 0 5px 0; font-size:1.1rem;">🤖 AI Asistent v detailu</h3>
+        <p style="margin:0; font-size:0.9rem; color:#555;">
+            <strong>🔎 Rozpoznat odrůdu:</strong> Určí přesný druh z fotek.<br>
+            <strong>🩺 AI Doktor:</strong> Zkontroluje zdraví a navrhne léčbu.<br>
+            <strong>💡 Hledat přípravky:</strong> Doporučí hnojiva a postřiky.
+        </p>
+    </div>
+
+    <button onclick="closeGuide()"
+        style="width:100%; padding:14px; background:#4CAF50; color:white; border:none; border-radius:8px; font-size:1.1rem; font-weight:bold; cursor:pointer; margin-top:15px;">Rozumím,
+        jdeme na to! 🚀</button>
+    </div>
+    </div>
+
+    <div id="ai-doctor-modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; flex-direction:column; justify-content:center; align-items:center; padding: 20px; box-sizing: border-box;">
+        <div
+            style="background:#fff; width:100%; max-width: 400px; border-radius:20px; padding:25px; box-sizing:border-box; position:relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+
+            <button onclick="closeAIDoctorModal()"
+                style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:1.5rem; cursor:pointer; color:#666;">✖</button>
+
+            <h2
+                style="margin-top:0; color:var(--warn, #d32f2f); font-size:1.5rem; border-bottom:2px solid #eee; padding-bottom:10px; text-align:center;">
+                🩺 AI Doktor</h2>
+            <p style="text-align:center; color:#555; font-size:0.95rem; margin-bottom: 20px;">Jak chcete postupovat při
+                diagnostice?</p>
+
+            <div style="display:flex; flex-direction:column; gap:15px;">
+                <button onclick="startQuickScan()"
+                    style="background:#fff; border:2px solid var(--doc, #1976d2); border-radius:12px; padding:15px; text-align:left; cursor:pointer; display:flex; align-items:center; gap:15px;">
+                    <div style="font-size:2rem;">📸</div>
+                    <div>
+                        <strong style="display:block; font-size:1.1rem; color:var(--doc, #1976d2);">Rychlý sken</strong>
+                        <span style="font-size:0.85rem; color:#666;">Mám fotku a chci okamžitou analýzu.</span>
+                    </div>
+                </button>
+
+                <button onclick="startGuidedDiagnosis()"
+                    style="background:#fff; border:2px solid var(--p, #2e7d32); border-radius:12px; padding:15px; text-align:left; cursor:pointer; display:flex; align-items:center; gap:15px;">
+                    <div style="font-size:2rem;">❓</div>
+                    <div>
+                        <strong style="display:block; font-size:1.1rem; color:var(--p, #2e7d32);">Popsat
+                            příznaky</strong>
+                        <span style="font-size:0.85rem; color:#666;">Problém neznám. Projít průvodce a nafotit
+                            detaily.</span>
+                    </div>
+                </button>
+
+                <button onclick="startManualDiagnosis()"
+                    style="background:#fff; border:2px solid #ff9800; border-radius:12px; padding:15px; text-align:left; cursor:pointer; display:flex; align-items:center; gap:15px;">
+                    <div style="font-size:2rem;">🔍</div>
+                    <div>
+                        <strong style="display:block; font-size:1.1rem; color:#f57c00;">Vím, co to je</strong>
+                        <span style="font-size:0.85rem; color:#666;">Rychlá záchrana a Agromanuál bez focení.</span>
+                    </div>
+                </button>
+            </div>
+        </div>
     </div>
 
     <div id="global-planner-modal"
@@ -2326,9 +2443,116 @@ Odpověz POUZE čistým JSON formátem bez dalších textů.`;
     </div>
 
     <script>
+        // --- 1. MOZEK: HYBRIDNÍ AI DOKTOR ---
+        function openAIDoctorModal() {
+            document.getElementById('ai-doctor-modal').style.display = 'flex';
+        }
+
+        function closeAIDoctorModal() {
+            document.getElementById('ai-doctor-modal').style.display = 'none';
+        }
+
+        function startQuickScan() {
+            closeAIDoctorModal();
+            document.getElementById('camera-input').click();
+        }
+
+        function startManualDiagnosis() {
+            closeAIDoctorModal();
+            const query = prompt("Zadejte název škůdce nebo nemoci (např. Mšice, Strupovitost):");
+            if (query && query.trim() !== "") {
+                window.open('https://www.google.com/search?q=site:agromanual.cz ' + encodeURIComponent(query), '_blank');
+            }
+        }
+
+        function startGuidedDiagnosis() {
+            const modalInner = document.querySelector('#ai-doctor-modal > div');
+            modalInner.innerHTML = `
+                <button onclick="resetAIDoctorModal()" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:1.5rem; cursor:pointer; color:#666;">✖</button>
+                <h2 style="margin-top:0; color:var(--p); font-size:1.5rem; border-bottom:2px solid #eee; padding-bottom:10px; text-align:center;">Průvodce příznaky</h2>
+                <p style="text-align:center; color:#555; margin-bottom: 20px;">Co se s rostlinou děje?</p>
+
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <button onclick="showChecklist('skvrny')" style="padding:15px; border-radius:10px; border:1px solid #ccc; background:#f9f9f9; font-size:1.1rem; cursor:pointer; text-align:left;">🍂 Fleky nebo skvrny na listech</button>
+                    <button onclick="showChecklist('hmyz')" style="padding:15px; border-radius:10px; border:1px solid #ccc; background:#f9f9f9; font-size:1.1rem; cursor:pointer; text-align:left;">🐛 Viditelný hmyz nebo pavučinky</button>
+                    <button onclick="showChecklist('vadnuti')" style="padding:15px; border-radius:10px; border:1px solid #ccc; background:#f9f9f9; font-size:1.1rem; cursor:pointer; text-align:left;">🥀 Vadnutí, schnutí, hniloba</button>
+                </div>
+            `;
+        }
+
+        function showChecklist(type) {
+            let checklistHTML = '';
+            if (type === 'skvrny') {
+                checklistHTML = `
+                    <p style="font-weight:bold;">Pro přesnou diagnózu vyfoťte:</p>
+                    <ul style="text-align:left; color:#555; line-height:1.6; margin-bottom:20px; font-size:0.95rem;">
+                        <li>Detail nejvíce poškozeného listu shora</li>
+                        <li>Detail stejného listu zespodu</li>
+                    </ul>`;
+            } else if (type === 'hmyz') {
+                checklistHTML = `
+                    <p style="font-weight:bold;">Pro přesnou diagnózu vyfoťte:</p>
+                    <ul style="text-align:left; color:#555; line-height:1.6; margin-bottom:20px; font-size:0.95rem;">
+                        <li>Makro detail samotného škůdce (co nejblíže)</li>
+                        <li>Místo, kde se vyskytuje nejvíce (spodní strana listů, stonky)</li>
+                    </ul>`;
+            } else if (type === 'vadnuti') {
+                checklistHTML = `
+                    <p style="font-weight:bold;">Pro přesnou diagnózu vyfoťte:</p>
+                    <ul style="text-align:left; color:#555; line-height:1.6; margin-bottom:20px; font-size:0.95rem;">
+                        <li>Celkový pohled na chřadnoucí rostlinu</li>
+                        <li>Detail stonku těsně nad substrátem</li>
+                    </ul>`;
+            }
+
+            const modalInner = document.querySelector('#ai-doctor-modal > div');
+            modalInner.innerHTML = `
+                <button onclick="resetAIDoctorModal()" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:1.5rem; cursor:pointer; color:#666;">✖</button>
+                <h2 style="margin-top:0; color:var(--doc); font-size:1.5rem; border-bottom:2px solid #eee; padding-bottom:10px; text-align:center;">Připravte si fotky</h2>
+                ${checklistHTML}
+                <button onclick="startQuickScan()" style="width:100%; padding:15px; background:var(--doc); color:white; border:none; border-radius:10px; font-size:1.1rem; font-weight:bold; cursor:pointer;">📸 Otevřít foťák a začít</button>
+                <button onclick="startGuidedDiagnosis()" style="width:100%; padding:10px; background:none; color:#666; border:none; font-size:0.9rem; cursor:pointer; margin-top:10px;">← Zpět na výběr</button>
+            `;
+        }
+
+        function resetAIDoctorModal() {
+            closeAIDoctorModal();
+            setTimeout(() => {
+                const modalInner = document.querySelector('#ai-doctor-modal > div');
+                modalInner.innerHTML = `
+                    <button onclick="closeAIDoctorModal()" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:1.5rem; cursor:pointer; color:#666;">✖</button>
+                    <h2 style="margin-top:0; color:var(--warn, #d32f2f); font-size:1.5rem; border-bottom:2px solid #eee; padding-bottom:10px; text-align:center;">🩺 AI Doktor</h2>
+                    <p style="text-align:center; color:#555; font-size:0.95rem; margin-bottom: 20px;">Jak chcete postupovat při diagnostice?</p>
+                    <div style="display:flex; flex-direction:column; gap:15px;">
+                        <button onclick="startQuickScan()" style="background:#fff; border:2px solid var(--doc, #1976d2); border-radius:12px; padding:15px; text-align:left; cursor:pointer; display:flex; align-items:center; gap:15px;">
+                            <div style="font-size:2rem;">📸</div>
+                            <div>
+                                <strong style="display:block; font-size:1.1rem; color:var(--doc, #1976d2);">Rychlý sken</strong>
+                                <span style="font-size:0.85rem; color:#666;">Mám fotku a chci okamžitou analýzu.</span>
+                            </div>
+                        </button>
+                        <button onclick="startGuidedDiagnosis()" style="background:#fff; border:2px solid var(--p, #2e7d32); border-radius:12px; padding:15px; text-align:left; cursor:pointer; display:flex; align-items:center; gap:15px;">
+                            <div style="font-size:2rem;">❓</div>
+                            <div>
+                                <strong style="display:block; font-size:1.1rem; color:var(--p, #2e7d32);">Popsat příznaky</strong>
+                                <span style="font-size:0.85rem; color:#666;">Problém neznám. Projít průvodce a nafotit detaily.</span>
+                            </div>
+                        </button>
+                        <button onclick="startManualDiagnosis()" style="background:#fff; border:2px solid #ff9800; border-radius:12px; padding:15px; text-align:left; cursor:pointer; display:flex; align-items:center; gap:15px;">
+                            <div style="font-size:2rem;">🔍</div>
+                            <div>
+                                <strong style="display:block; font-size:1.1rem; color:#f57c00;">Vím, co to je</strong>
+                                <span style="font-size:0.85rem; color:#666;">Rychlá záchrana a Agromanuál bez focení.</span>
+                            </div>
+                        </button>
+                    </div>
+                `;
+            }, 300);
+        }
+
+        // --- 2. MOZEK: GLOBÁLNÍ PLÁNOVAČ ---
         let globalPlannerMonth = new Date().getMonth();
 
-        // Funkce pro otevření
         function openGlobalPlanner() {
             globalPlannerMonth = new Date().getMonth();
             document.getElementById('global-planner-modal').style.display = 'flex';
@@ -2336,13 +2560,11 @@ Odpověz POUZE čistým JSON formátem bez dalších textů.`;
             renderGlobalPlannerContent();
         }
 
-        // Funkce pro zavření
         function closeGlobalPlanner() {
             document.getElementById('global-planner-modal').style.display = 'none';
             document.body.style.overflow = '';
         }
 
-        // Posun měsíců
         function changeGlobalMonth(offset) {
             globalPlannerMonth += offset;
             if (globalPlannerMonth < 0) globalPlannerMonth = 11;
@@ -2350,13 +2572,11 @@ Odpověz POUZE čistým JSON formátem bez dalších textů.`;
             renderGlobalPlannerContent();
         }
 
-        // Návrat na dnešek
         function resetGlobalMonth() {
             globalPlannerMonth = new Date().getMonth();
             renderGlobalPlannerContent();
         }
 
-        // Hlavní funkce pro vykreslení (hledání v databázi) - OPRAVENÁ VERZE
         async function renderGlobalPlannerContent() {
             const monthNames = ["Leden", "Únor", "Březen", "Duben", "Květen", "Červen", "Červenec", "Srpen", "Září", "Říjen", "Listopad", "Prosinec"];
             document.getElementById('global-month-name').innerText = monthNames[globalPlannerMonth];
@@ -2383,13 +2603,11 @@ Odpověz POUZE čistým JSON formátem bez dalších textů.`;
                 let totalTasksCount = 0;
 
                 allPlants.forEach(plant => {
-                    // 🟢 TADY JE OPRAVA: Přísný filtr! Pokud úkoly neexistují, nebo to NENÍ seznam, přeskočíme to.
                     if (!plant.tasks || !Array.isArray(plant.tasks) || plant.tasks.length === 0) return;
 
                     let plantTasksHTML = '';
                     let hasTaskForThisMonth = false;
 
-                    // Teď už máme 100% jistotu, že forEach proběhne bez chyby
                     plant.tasks.forEach(task => {
                         const isForViewedMonth = Array.isArray(task.months) ? task.months.includes(globalPlannerMonth) : task.month === globalPlannerMonth;
 
