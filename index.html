@@ -555,6 +555,13 @@
     </header>
 
     <div class="container">
+
+        <div style="text-align: center; margin-bottom: 15px;">
+            <button onclick="openGlobalPlanner()"
+                style="background: var(--doc, #2196F3); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; font-size: 1rem; width: 100%; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                📋 Přehled úkolů celé zahrady
+            </button>
+        </div>
         <div style="position: sticky; top: 0; background: var(--bg); z-index: 90; padding: 10px 0; margin-top: -10px;">
             <div style="display: flex; gap: 10px; margin-bottom: 8px;">
                 <input type="text" id="search-box" placeholder="Hledat..." oninput="renderPlants()"
@@ -2285,6 +2292,158 @@ Odpověz POUZE čistým JSON formátem bez dalších textů.`;
         </div>
     </div>
 
+    <div id="global-planner-modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; flex-direction:column; justify-content:flex-end;">
+        <div
+            style="background:#fff; width:100%; height:90%; border-radius:20px 20px 0 0; padding:20px; box-sizing:border-box; overflow-y:auto; position:relative; display:flex; flex-direction:column;">
+
+            <button onclick="closeGlobalPlanner()"
+                style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:1.5rem; cursor:pointer; color:#666;">✖</button>
+
+            <h2
+                style="margin-top:0; color:var(--p); font-size:1.5rem; border-bottom:2px solid #eee; padding-bottom:10px;">
+                📋 Plánovač zahrady</h2>
+
+            <div
+                style="background: #e8f5e9; padding: 15px; border-radius: 8px; border: 1px solid #c8e6c9; text-align: center; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <button onclick="changeGlobalMonth(-1)"
+                        style="background: white; border: 1px solid #ccc; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight:bold; font-size:1.2rem;">⬅️</button>
+                    <strong id="global-month-name"
+                        style="font-size: 1.2rem; color: #1b5e20; text-transform: uppercase;">MĚSÍC</strong>
+                    <button onclick="changeGlobalMonth(1)"
+                        style="background: white; border: 1px solid #ccc; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight:bold; font-size:1.2rem;">➡️</button>
+                </div>
+                <button id="global-today-btn" onclick="resetGlobalMonth()"
+                    style="width:100%; margin-top: 15px; font-size: 0.9rem; background: #fff; border: 1px dashed #2e7d32; color: #2e7d32; padding: 8px; border-radius: 4px; cursor: pointer; display:none;">📅
+                    Vrátit se na dnešek</button>
+            </div>
+
+            <div id="global-planner-content" style="flex:1; overflow-y:auto; padding-bottom: 30px;">
+                <p style="text-align:center; color:#666;">Načítám úkoly...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let globalPlannerMonth = new Date().getMonth();
+
+        // Funkce pro otevření
+        function openGlobalPlanner() {
+            globalPlannerMonth = new Date().getMonth();
+            document.getElementById('global-planner-modal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            renderGlobalPlannerContent();
+        }
+
+        // Funkce pro zavření
+        function closeGlobalPlanner() {
+            document.getElementById('global-planner-modal').style.display = 'none';
+            document.body.style.overflow = '';
+        }
+
+        // Posun měsíců
+        function changeGlobalMonth(offset) {
+            globalPlannerMonth += offset;
+            if (globalPlannerMonth < 0) globalPlannerMonth = 11;
+            if (globalPlannerMonth > 11) globalPlannerMonth = 0;
+            renderGlobalPlannerContent();
+        }
+
+        // Návrat na dnešek
+        function resetGlobalMonth() {
+            globalPlannerMonth = new Date().getMonth();
+            renderGlobalPlannerContent();
+        }
+
+        // Hlavní funkce pro vykreslení (hledání v databázi)
+        async function renderGlobalPlannerContent() {
+            const monthNames = ["Leden", "Únor", "Březen", "Duben", "Květen", "Červen", "Červenec", "Srpen", "Září", "Říjen", "Listopad", "Prosinec"];
+            document.getElementById('global-month-name').innerText = monthNames[globalPlannerMonth];
+
+            const currentRealMonth = new Date().getMonth();
+            const todayBtn = document.getElementById('global-today-btn');
+            if (globalPlannerMonth !== currentRealMonth) {
+                todayBtn.style.display = 'block';
+            } else {
+                todayBtn.style.display = 'none';
+            }
+
+            const contentDiv = document.getElementById('global-planner-content');
+            contentDiv.innerHTML = '<p style="text-align:center; color:#666;">Prohledávám zahradu...</p>';
+
+            const db = await getDB();
+            const tx = db.transaction('plants', 'readonly');
+            const store = tx.objectStore('plants');
+            const request = store.getAll();
+
+            request.onsuccess = () => {
+                const allPlants = request.result;
+                let finalHTML = '';
+                let totalTasksCount = 0;
+
+                allPlants.forEach(plant => {
+                    if (!plant.tasks || plant.tasks.length === 0) return;
+
+                    let plantTasksHTML = '';
+                    let hasTaskForThisMonth = false;
+
+                    plant.tasks.forEach(task => {
+                        const isForViewedMonth = Array.isArray(task.months) ? task.months.includes(globalPlannerMonth) : task.month === globalPlannerMonth;
+
+                        if (isForViewedMonth) {
+                            hasTaskForThisMonth = true;
+                            totalTasksCount++;
+
+                            const isDone = Array.isArray(task.completedMonths) && task.completedMonths.includes(globalPlannerMonth);
+
+                            let textStyle = "color: #333;";
+                            let icon = "⏳";
+
+                            if (globalPlannerMonth < currentRealMonth) {
+                                if (!isDone) {
+                                    textStyle = "color: #d32f2f; font-weight: bold;";
+                                    icon = "❗";
+                                } else {
+                                    textStyle = "color: #4caf50; text-decoration: line-through;";
+                                    icon = "✓";
+                                }
+                            } else if (globalPlannerMonth === currentRealMonth) {
+                                if (isDone) {
+                                    textStyle = "color: #ccc; text-decoration: line-through;";
+                                    icon = "✓";
+                                } else {
+                                    textStyle = "color: #1976d2; font-weight: bold;";
+                                    icon = "👉";
+                                }
+                            }
+
+                            plantTasksHTML += `<li style="margin-bottom: 5px; ${textStyle}">${icon} ${task.name}</li>`;
+                        }
+                    });
+
+                    if (hasTaskForThisMonth) {
+                        finalHTML += `
+                        <div style="background: #f9f9f9; padding: 12px; border-radius: 8px; border: 1px solid #e0e0e0; margin-bottom: 15px;">
+                            <strong style="color: var(--p); font-size: 1.1rem; display: block; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 8px;">🌱 ${plant.name}</strong>
+                            <ul style="margin: 0; padding-left: 20px; list-style-type: none;">
+                                ${plantTasksHTML}
+                            </ul>
+                        </div>`;
+                    }
+                });
+
+                if (totalTasksCount === 0) {
+                    contentDiv.innerHTML = `<div style="text-align:center; padding: 30px 10px; color: #888;">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">🌴</div>
+                        Nic tu není. Vaše zahrada v tomto měsíci odpočívá.
+                    </div>`;
+                } else {
+                    contentDiv.innerHTML = finalHTML;
+                }
+            };
+        }
+    </script>
 </body>
 
 </html>
