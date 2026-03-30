@@ -2121,20 +2121,19 @@
                     const mesic = String(dnes.getMonth() + 1).padStart(2, '0');
                     const rok = dnes.getFullYear();
 
-                    // Uložíme si hotový soubor do paměti
+                    // Uložíme data pro pozdější použití v oknech
                     preparedBackupBlob = blob;
                     preparedBackupFileName = `PlantMaster_Zaloha_${den}-${mesic}-${rok}.zip`;
 
                     hideLoader();
 
-                    // ZOBRAZÍME NOVÉ OKNO PRO VÝBĚR AKCE
-                    // Pojistka: nastavíme extrémně vysoký z-index přímo z JavaScriptu
+                    // AKTIVACE OKNA (místo stahování)
                     const backupModal = document.getElementById('backup-ready-modal');
                     if (backupModal) {
                         backupModal.style.zIndex = '10000';
                         backupModal.style.display = 'flex';
                     } else {
-                        // Pokud okno v HTML chybí, použijeme záchranné stažení
+                        // Záchranná brzda - pokud by okno v HTML chybělo
                         saveBackup();
                     }
                 });
