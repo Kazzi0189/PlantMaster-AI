@@ -2159,7 +2159,9 @@
 
         async function shareBackup() {
             if (!preparedBackupBlob) return;
-            const fileToShare = new File([preparedBackupBlob], preparedBackupFileName, { type: preparedBackupBlob.type });
+
+            // Fígl: Natvrdo řekneme prohlížeči, že jde o standardní ZIP archiv
+            const fileToShare = new File([preparedBackupBlob], preparedBackupFileName, { type: "application/zip" });
 
             if (navigator.canShare && navigator.canShare({ files: [fileToShare] })) {
                 try {
@@ -2168,12 +2170,15 @@
                         title: 'Záloha PlantMaster',
                         text: 'Zde je kompletní záloha mých rostlin z aplikace PlantMaster.'
                     });
+                    // Pokud se to povede, okno zavřeme
                     document.getElementById('backup-ready-modal').style.display = 'none';
                 } catch (err) {
-                    console.log('Sdílení zrušeno nebo selhalo', err);
+                    console.error('Sdílení zrušeno nebo selhalo:', err);
+                    // Záchytná síť podle tvého návrhu - jen vyskočí upozornění
+                    alert("Prohlížeč z bezpečnostních důvodů zablokoval přímé sdílení ZIP souboru. Použijte prosím zelené tlačítko pro uložení do zařízení.");
                 }
             } else {
-                alert("Váš prohlížeč na tomto zařízení bohužel nepodporuje přímé sdílení souborů. Použijte prosím zelené tlačítko 'Uložit do zařízení'.");
+                alert("Váš prohlížeč nepodporuje přímé sdílení souborů. Použijte prosím zelené tlačítko 'Uložit do zařízení'.");
             }
         }
 
