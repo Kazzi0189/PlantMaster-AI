@@ -2716,9 +2716,12 @@ Odpověz POUZE čistým JSON formátem bez dalších textů.`;
 
         // --- 2. MOZEK: GLOBÁLNÍ PLÁNOVAČ ---
         let globalPlannerMonth = new Date().getMonth();
+        let globalPlannerYear = new Date().getFullYear(); // 🟢 PŘIDÁNO: Paměť na rok
 
         function openGlobalPlanner() {
-            globalPlannerMonth = new Date().getMonth();
+            const dnes = new Date();
+            globalPlannerMonth = dnes.getMonth();
+            globalPlannerYear = dnes.getFullYear(); // 🟢 PŘIDÁNO: Reset roku
             document.getElementById('global-planner-modal').style.display = 'flex';
             document.body.style.overflow = 'hidden';
             renderGlobalPlannerContent();
@@ -2731,13 +2734,20 @@ Odpověz POUZE čistým JSON formátem bez dalších textů.`;
 
         function changeGlobalMonth(offset) {
             globalPlannerMonth += offset;
-            if (globalPlannerMonth < 0) globalPlannerMonth = 11;
-            if (globalPlannerMonth > 11) globalPlannerMonth = 0;
+            if (globalPlannerMonth < 0) {
+                globalPlannerMonth = 11;
+                globalPlannerYear--; // 🟢 PŘIDÁNO: Krok o rok zpět
+            } else if (globalPlannerMonth > 11) {
+                globalPlannerMonth = 0;
+                globalPlannerYear++; // 🟢 PŘIDÁNO: Krok o rok vpřed
+            }
             renderGlobalPlannerContent();
         }
 
         function resetGlobalMonth() {
-            globalPlannerMonth = new Date().getMonth();
+            const dnes = new Date();
+            globalPlannerMonth = dnes.getMonth();
+            globalPlannerYear = dnes.getFullYear(); // 🟢 PŘIDÁNO: Reset roku
             renderGlobalPlannerContent();
         }
 
