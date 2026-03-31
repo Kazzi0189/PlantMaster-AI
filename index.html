@@ -2785,7 +2785,8 @@ Odpověz POUZE čistým JSON formátem bez dalších textů.`;
                 let totalTasksCount = 0;
 
                 allPlants.forEach(plant => {
-                    if (!plant.tasks || plant.tasks.length === 0) return;
+                    // 🚨 PŘIDANÁ OCHRANA: Pokud úkoly neexistují NEBO to není správný seznam, přeskočit!
+                    if (!plant.tasks || !Array.isArray(plant.tasks) || plant.tasks.length === 0) return;
 
                     plant.tasks.forEach(task => {
                         const isForViewedMonth = Array.isArray(task.months) ? task.months.includes(globalPlannerMonth) : task.month === globalPlannerMonth;
