@@ -1157,7 +1157,7 @@
             }
         }
 
-        // --- 5. LOGIKA ÚKOLŮ S DOPTÁVÁNÍM ---
+        // --- 5. LOGIKA ÚKOLŮ S DOPTÁVÁNÍM (VYČIŠTĚNÁ VERZE) ---
         async function completeTask(plantId, taskName, event) {
             if (event) event.stopPropagation();
 
@@ -1182,10 +1182,12 @@
 
             req.onsuccess = () => {
                 let plant = req.result;
+                if (!plant) return; // Pojistka, kdyby rostlina neexistovala
+
                 const dnes = new Date();
                 const currentStamp = `${dnes.getFullYear()}-${dnes.getMonth()}`;
 
-                // 1. ZAZNAMENÁME SPLNĚNÍ (aby úkol zmizel z aktivních)
+                // 1. ZAZNAMENÁME SPLNĚNÍ (do skryté logiky pro kalendář)
                 if (plant.tasks && Array.isArray(plant.tasks)) {
                     const task = plant.tasks.find(t => t.name === taskName);
                     if (task) {
@@ -1195,21 +1197,24 @@
                         }
                     }
                 }
-            }
 
-            // 2. ZAPÍŠEME DO HISTORIE
-            if (!plant.careHistory) plant.careHistory = [];
-            plant.careHistory.push({
-                date: new Date().toLocaleDateString('cs-CZ'),
-                text: `✅ Splněn úkol: ${taskName}${details}`
-            });
+                // 2. ZAPÍŠEME DO HISTORIE (viditelný text pro uživatele)
+                if (!plant.careHistory) plant.careHistory = [];
+                plant.careHistory.push({
+                    date: new Date().toLocaleDateString('cs-CZ'),
+                    text: `✅ Splněn úkol: ${taskName}${details}`
+                });
 
-            store.put(plant);
-            tx.oncomplete = () => {
-                renderPlants();
-                if (currentPlantId === plantId) openDetail(plantId);
+                // 3. ULOŽENÍ A OBNOVA (vše musí být uvnitř onsuccess)
+                store.put(plant);
+                tx.oncomplete = () => {
+                    renderPlants();
+                    // Pokud je otevřený detail kytky, hned ho překreslíme
+                    if (typeof currentPlantId !== 'undefined' && currentPlantId === plantId) {
+                        openDetail(plantId);
+                    }
+                };
             };
-        };
         }
 
         async function waterPlant() {
