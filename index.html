@@ -2988,7 +2988,114 @@ Odpověz POUZE čistým JSON formátem bez dalších textů.`;
             // 🟢 Změněno: Už nekliká na 'camera-input', ale na náš nový 'doctor-camera-input'
             document.getElementById('doctor-camera-input').click();
         }
+        // --- 🟢 HROMADNÁ ZÁLIVKA (S POJISTKOU PROTI ZTRÁTĚ DAT) ---
 
+        // 1. Zobrazení a skrytí okénka
+        function showBulkWaterModal() {
+            document.getElementById('bulk-water-modal').style.display = 'flex';
+        }
+
+        function closeBulkWaterModal() {
+            document.getElementById('bulk-water-modal').style.display = 'none';
+        }
+
+        // 2. Samotné provedení zálivky
+        async function confirmBulkWatering() {
+            const category = document.getElementById('bulk-category-select').value;
+            const db = await getDB();
+            const tx = db.transaction('plants', 'readwrite');
+            const store = tx.objectStore('plants');
+            const req = store.getAll();
+
+            req.onsuccess = () => {
+                let plants = req.result;
+                let updatedCount = 0;
+                const dnes = new Date().toISOString().split('T')[0];
+                const dnesZobrazeni = new Date().toLocaleDateString('cs-CZ');
+
+                plants.forEach(p => {
+                    // Pokud je kategorie 'all' (vše), nebo se shoduje s výběrem
+                    if (category === 'all' || p.category === category) {
+
+                        // 🛑 POJISTKA: Uložíme staré datum zálivky (aby šlo vrátit zpět)
+                        p.previousWatered = p.lastWatered;
+
+                        // Zapsání nového data
+                        p.lastWatered = dnes;
+
+                        // Zápis do historie s tajnou značkou (isBulk), abychom to uměli smazat
+                        if (!p.careHistory) p.careHistory = [];
+                        p.careHistory.push({
+                            date: dnesZobrazeni,
+                            text: '🌧️ Hromadná zálivka',
+                            isBulk: true
+                        });
+
+                        store.put(p);
+                        updatedCount++;
+                    }
+                });
+
+                tx.oncomplete = () => {
+                    closeBulkWaterModal();
+                    if (updatedCount > 0) {
+                        // Zobrazíme oranžové tlačítko pro Vzetí zpět
+                        document.getElementById('btn-undo-bulk').style.display = 'block';
+
+                        // Uložíme si do prohlížeče, co jsme zalili (pro případ, že by uživatel obnovil stránku)
+                        localStorage.setItem('bulkWateringCategory', category);
+
+                        alert(`Úspěšně zalito ${updatedCount} rostlin.`);
+                        renderPlants(); // Překreslení hlavní obrazovky
+                    } else {
+                        alert("V této kategorii aktuálně nemáte žádné rostliny.");
+                    }
+                };
+            };
+        }
+
+        // 3. Záchranná brzda (Vzít zpět)
+        async function undoBulkWatering() {
+            if (!confirm("Opravdu chcete zrušit poslední hromadnou zálivku? Datum zálivky se vrátí na původní hodnoty.")) return;
+
+            const category = localStorage.getItem('bulkWateringCategory');
+            if (!category) return;
+
+            const db = await getDB();
+            const tx = db.transaction('plants', 'readwrite');
+            const store = tx.objectStore('plants');
+            const req = store.getAll();
+
+            req.onsuccess = () => {
+                let plants = req.result;
+
+                plants.forEach(p => {
+                    if (category === 'all' || p.category === category) {
+                        // 🛑 OBNOVA: Vrátíme staré datum zálivky a vyčistíme pojistku
+                        if (p.previousWatered !== undefined) {
+                            p.lastWatered = p.previousWatered;
+                            delete p.previousWatered;
+                        }
+
+                        // Smažeme záznam z historie (najde ten s naší tajnou značkou isBulk)
+                        if (p.careHistory) {
+                            p.careHistory = p.careHistory.filter(record => !record.isBulk);
+                        }
+
+                        store.put(p);
+                    }
+                });
+
+                tx.oncomplete = () => {
+                    // Schováme oranžové tlačítko a vyčistíme paměť
+                    document.getElementById('btn-undo-bulk').style.display = 'none';
+                    localStorage.removeItem('bulkWateringCategory');
+
+                    alert("Hromadná zálivka byla úspěšně zrušena a data vrácena zpět.");
+                    renderPlants(); // Překreslení hlavní obrazovky
+                };
+            };
+        }
 
     </script>
     <div id="bulk-water-modal" class="modal"
