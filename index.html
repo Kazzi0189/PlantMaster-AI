@@ -1216,6 +1216,36 @@
                 };
             };
         }
+        async function undoTask(plantId, taskName) {
+            const db = await getDB();
+            const tx = db.transaction('plants', 'readwrite');
+            const store = tx.objectStore('plants');
+            const req = store.get(plantId);
+
+            req.onsuccess = () => {
+                let plant = req.result;
+                if (!plant) return;
+
+                const dnes = new Date();
+                const currentStamp = `${dnes.getFullYear()}-${dnes.getMonth()}`;
+
+                if (plant.tasks && Array.isArray(plant.tasks)) {
+                    const task = plant.tasks.find(t => t.name === taskName);
+                    if (task && task.completedMonths) {
+                        // Odstraní naše nové razítko ze seznamu
+                        task.completedMonths = task.completedMonths.filter(m => m !== currentStamp);
+                    }
+                }
+
+                store.put(plant);
+                tx.oncomplete = () => {
+                    renderPlants();
+                    if (typeof currentPlantId !== 'undefined' && currentPlantId === plantId) {
+                        renderTasksForMonth(plantId); // Ihned překreslí kalendář
+                    }
+                };
+            };
+        }
 
         async function waterPlant() {
             const db = await getDB();
@@ -1372,7 +1402,7 @@
                             );
 
                             // Pokud jsme v současnosti a úkol je hotový, v aktuálním měsíci ho už normálně neukazujeme (aby nezavazel)
-                            if (viewedMonth === currentRealMonth && isDone) return;
+                            //if (viewedMonth === currentRealMonth && isDone) return;
 
                             hasVisibleTasks = true;
 
@@ -1381,7 +1411,7 @@
                             let buttonHTML = "";
                             let statusText = "";
 
-                            // --- TADY ZAČÍNÁ ÚPRAVA ---
+                            // Tady kód konečně porovnává i roky, ne jen měsíce
                             const isPast = viewedYear < currentRealYear || (viewedYear === currentRealYear && viewedMonth < currentRealMonth);
                             const isFuture = viewedYear > currentRealYear || (viewedYear === currentRealYear && viewedMonth > currentRealMonth);
                             const isCurrent = viewedYear === currentRealYear && viewedMonth === currentRealMonth;
@@ -1391,17 +1421,22 @@
                                 if (!isDone) {
                                     taskStyle = "border: 2px solid #f44336; background: #ffebee;";
                                     statusText = "<div style='color: #d32f2f; font-weight: bold; font-size: 0.85rem; margin-bottom: 5px;'>❗ Nesplněno z minulosti</div>";
-                                    buttonHTML = `<button class="btn-complete" style="background: #ccc; cursor: not-allowed; opacity: 0.7;" disabled>Uzamčeno</button>`;
+                                    buttonHTML = `<button class="btn-complete" style="background: #ccc; cursor: not-allowed; opacity: 0.7;" disabled>Propásnuto</button>`;
                                 } else {
                                     statusText = "<div style='color: #4caf50; font-weight: bold; font-size: 0.85rem; margin-bottom: 5px;'>✓ Splněno v termínu</div>";
-                                    buttonHTML = `<button class="btn-complete" style="background: #4caf50; opacity: 0.7;" disabled>Hotovo</button>`;
+                                    buttonHTML = `<button class="btn-undo" onclick="undoTask(${plant.id}, '${task.name}')">Zrušit</button>`;
                                 }
                             } else if (isFuture) {
                                 // BUDOUCNOST
                                 buttonHTML = `<button class="btn-complete" style="background: #ccc; cursor: not-allowed; opacity: 0.7;" disabled>Čeká na měsíc</button>`;
                             } else if (isCurrent) {
-                                // SOUČASNOST (Dnešek) - klasické tlačítko
-                                buttonHTML = `<button class="btn-complete" onclick="completeTask(${plant.id}, '${task.name}', event)">✓ Splnit</button>`;
+                                // SOUČASNOST
+                                if (isDone) {
+                                    statusText = "<div style='color: #4caf50; font-weight: bold; font-size: 0.85rem; margin-bottom: 5px;'>✓ Splněno dnes</div>";
+                                    buttonHTML = `<button class="btn-undo" onclick="undoTask(${plant.id}, '${task.name}')">Zrušit</button>`;
+                                } else {
+                                    buttonHTML = `<button class="btn-complete" onclick="completeTask(${plant.id}, '${task.name}', event)">✓ Splnit</button>`;
+                                }
                             }
                             // --- TADY KONČÍ ÚPRAVA ---
 
