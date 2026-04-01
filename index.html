@@ -2991,6 +2991,36 @@ Odpověz POUZE čistým JSON formátem bez dalších textů.`;
 
 
     </script>
+    <div id="bulk-water-modal" class="modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center;">
+        <div class="modal-content"
+            style="background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+            <h3 style="margin-top: 0; color: #2196F3; font-size: 1.4rem;">🌧️ Hromadná zálivka</h3>
+            <p style="font-size: 0.95rem; color: #555; margin-bottom: 20px;">
+                Vyberte kategorii rostlin, kterou chcete hromadně zalít (např. po dešti na zahradě). Všem rostlinám v
+                této kategorii se nastaví zálivka na dnešek.
+            </p>
+
+            <select id="bulk-category-select"
+                style="width: 100%; padding: 12px; margin-bottom: 25px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; outline: none; background: #f9f9f9;">
+                <option value="all">Všechny rostliny napříč kategoriemi</option>
+                <option value="Pokojové">Pokojové</option>
+                <option value="Zelenina">Zelenina</option>
+                <option value="Ovoce">Ovoce</option>
+                <option value="Bylinky">Bylinky</option>
+                <option value="Stromy">Stromy</option>
+                <option value="Keře">Keře</option>
+            </select>
+
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button onclick="closeBulkWaterModal()"
+                    style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #e0e0e0; color: #333; font-weight: bold; font-size: 1rem; cursor: pointer;">Zrušit</button>
+                <button onclick="confirmBulkWatering()"
+                    style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #2196F3; color: white; font-weight: bold; font-size: 1rem; cursor: pointer;">Zalít
+                    vybrané</button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>
