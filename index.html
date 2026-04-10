@@ -621,7 +621,7 @@
         </div>
 
         <div class="calendar-section">
-            <h3>📅 Úkoly na tento měsíc</h3>
+            <h3 id="main-calendar-header">📅 Úkoly na tento měsíc</h3>
             <div id="calendar-tasks"></div>
         </div>
 
@@ -1068,7 +1068,17 @@
             };
         }
 
-        function renderGroupedTasks(plants) {
+        function renderGroupedTasks(plants) {// --- DYNAMICKÝ NADPIS KALENDÁŘE ---
+            const dnesniDatum = new Date();
+            const nazevMesice = dnesniDatum.toLocaleDateString('cs-CZ', { month: 'long' });
+            const mesicVelkePismeno = nazevMesice.charAt(0).toUpperCase() + nazevMesice.slice(1);
+            const formatDnes = dnesniDatum.toLocaleDateString('cs-CZ');
+
+            const hlavickaEl = document.getElementById('main-calendar-header');
+            if (hlavickaEl) {
+                hlavickaEl.innerText = `🗓️ Úkoly na měsíc ${mesicVelkePismeno} (Dnes je ${formatDnes})`;
+            }
+            // ----------------------------------
             const calendarContainer = document.getElementById('calendar-tasks');
             calendarContainer.innerHTML = '';
 
