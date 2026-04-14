@@ -1646,7 +1646,16 @@
                 // Občanka
                 const infoCard = document.getElementById('plant-info-card');
                 if (plant.description || plant.water || plant.light) {
-                    document.getElementById('plant-desc').innerText = plant.description || "Charakteristika zatím chybí.";
+                    // --- NOVÉ: Přidání varovného štítku o toxicitě ---
+                    let toxicityBadge = getToxicityBadge(plant.description || "");
+                    let descText = plant.description || "Charakteristika zatím chybí.";
+
+                    // Změnili jsme innerText na innerHTML, aby se štítek vykreslil jako grafika
+                    document.getElementById('plant-desc').innerHTML = toxicityBadge
+                        ? `${toxicityBadge}<div style="margin-top:5px; line-height: 1.5;">${descText}</div>`
+                        : descText;
+                    // ------------------------------------------------
+
                     document.querySelector('#plant-water-info span').innerText = plant.water || "Neznámá";
                     document.querySelector('#plant-light-info span').innerText = plant.light || "Neznámé";
                     infoCard.style.display = 'block';
@@ -3230,6 +3239,27 @@ Odpověz POUZE čistým JSON formátem bez dalších textů.`;
                 panel.style.display = "block";
                 icon.innerText = "▲";
             }
+        }
+        // --- CHYTRÝ DETEKTOR TOXICITY ---
+        function getToxicityBadge(text) {
+            if (!text) return "";
+            const lowerText = text.toLowerCase();
+
+            // Hledáme klíčová slova
+            if (lowerText.includes("jedovat") || lowerText.includes("toxick") || lowerText.includes("nebezpečn")) {
+                let detailText = "Pozor: Může být jedovatá";
+
+                // Pokus o upřesnění z textu
+                if (lowerText.includes("pro kočky") || lowerText.includes("pro psy") || lowerText.includes("pro zvířata")) {
+                    detailText = "Toxické pro zvířata";
+                } else if (lowerText.includes("pro lidi") || lowerText.includes("pro děti")) {
+                    detailText = "Toxické pro lidi/děti";
+                }
+
+                // Vrátíme hotový HTML štítek
+                return `<span style="display:inline-block; background-color: #ffebee; color: #d32f2f; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; border: 1px solid #ffcdd2; margin-top: 5px; margin-bottom: 5px;">⚠️ ${detailText}</span>`;
+            }
+            return ""; // Pokud není jedovatá, nevrátí nic
         }
 
 
