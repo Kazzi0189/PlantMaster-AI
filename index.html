@@ -3274,6 +3274,7 @@ Odpověz POUZE čistým JSON formátem bez dalších textů.`;
             return ""; // Pokud není jedovatá, nevrátí nic
         }
         // --- FUNKCE PRO ČASOSBĚR ---
+        // --- 1. FUNKCE: OTEVŘENÍ INTERAKTIVNÍHO ČASOSBĚRU (SLIDER) ---
         async function openTimelapse(plantId) {
             const db = await getDB();
             const tx = db.transaction('plants', 'readonly');
@@ -3283,37 +3284,136 @@ Odpověz POUZE čistým JSON formátem bez dalších textů.`;
                 const plant = req.result;
                 if (!plant || !plant.images || plant.images.length < 2) return;
 
-                const firstImage = plant.images[0]; // Úplně první vyfocená fotka
-                const lastImage = plant.images[plant.images.length - 1]; // Úplně poslední vyfocená fotka
+                const firstImage = plant.images[0];
+                const lastImage = plant.images[plant.images.length - 1];
 
-                // Vytvoříme modální okno za běhu (nemusíš nic dávat do HTML kostry)
+                // Vytvoření modálního okna
                 let modal = document.createElement('div');
                 modal.id = 'timelapse-modal';
                 modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter: blur(4px); z-index:3000; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; box-sizing:border-box; overflow-y:auto;';
 
+                // Styly speciálně pro náš průhledný slider (aby nebyl vidět ošklivý posuvník, ale jen čára/kolečko)
+                const sliderCss = `
+                    #tl-slider { -webkit-appearance: none; appearance: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: transparent; outline: none; z-index: 20; margin: 0; }
+                    #tl-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 4px; height: 300px; background: white; cursor: ew-resize; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+                    #tl-slider::-moz-range-thumb { width: 4px; height: 300px; background: white; cursor: ew-resize; box-shadow: 0 0 10px rgba(0,0,0,0.5); border: none; }
+                `;
+
                 modal.innerHTML = `
-                    <div style="width: 100%; max-width: 500px; background: #fff; border-radius: 16px; overflow: hidden; position: relative; padding-bottom: 15px;">
-                        <button onclick="document.getElementById('timelapse-modal').remove()" style="position:absolute; top:15px; right:15px; background:#f44336; color:white; border:none; border-radius:50%; width:32px; height:32px; font-weight:bold; cursor:pointer; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">✖</button>
+                    <style>${sliderCss}</style>
+                    <div style="width: 100%; max-width: 500px; background: #fff; border-radius: 16px; overflow: hidden; position: relative; padding-bottom: 20px;">
+                        <button onclick="document.getElementById('timelapse-modal').remove()" style="position:absolute; top:15px; right:15px; background:#f44336; color:white; border:none; border-radius:50%; width:32px; height:32px; font-weight:bold; cursor:pointer; z-index: 30; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">✖</button>
                         
-                        <h3 style="text-align:center; margin: 20px 0 10px 0; color:#333; font-size: 1.3rem;">⏳ ${plant.name}</h3>
-                        <p style="text-align:center; margin: 0 0 20px 0; color:#777; font-size: 0.9rem;">Vaše pěstitelské úspěchy</p>
+                        <h3 style="text-align:center; margin: 20px 0 5px 0; color:#333; font-size: 1.3rem;">⏳ ${plant.name}</h3>
+                        <p style="text-align:center; margin: 0 0 15px 0; color:#777; font-size: 0.85rem;">Tažením prstu přes obrázek porovnejte rozdíl</p>
                         
                         <div style="padding: 0 15px;">
-                            <div style="margin-bottom: 20px; text-align:center;">
-                                <div style="display:inline-block; background: #eee; padding: 4px 12px; border-radius: 20px; font-size:0.8rem; font-weight:bold; color:#555; margin-bottom: 8px;">🌱 Když jsme začínali</div>
-                                <img src="${firstImage}" style="width:100%; height: 200px; object-fit:cover; border-radius:12px; border: 2px dashed #bdbdbd;">
+                            <div style="position: relative; width: 100%; height: 300px; border-radius: 12px; overflow: hidden; background: #eee; box-shadow: inset 0 0 10px rgba(0,0,0,0.1);">
+                                
+                                <img src="${firstImage}" style="position: absolute; top:0; left:0; width: 100%; height: 100%; object-fit: cover;">
+                                
+                                <img id="tl-after-img" src="${lastImage}" style="position: absolute; top:0; left:0; width: 100%; height: 100%; object-fit: cover; clip-path: polygon(50% 0, 100% 0, 100% 100%, 50% 100%);">
+                                
+                                <div style="position:absolute; bottom:10px; left:10px; background:rgba(0,0,0,0.5); color:white; padding:4px 8px; border-radius:4px; font-size:0.7rem; pointer-events:none; z-index:10;">🌱 Začátek</div>
+                                <div style="position:absolute; bottom:10px; right:10px; background:rgba(76,175,80,0.8); color:white; padding:4px 8px; border-radius:4px; font-size:0.7rem; pointer-events:none; z-index:10;">✨ Nyní</div>
+
+                                <input type="range" min="0" max="100" value="50" id="tl-slider" oninput="document.getElementById('tl-after-img').style.clipPath = 'polygon(' + this.value + '% 0, 100% 0, 100% 100%, ' + this.value + '% 100%)'">
                             </div>
-                            
-                            <div style="text-align:center;">
-                                <div style="display:inline-block; background: #4caf50; padding: 4px 12px; border-radius: 20px; font-size:0.8rem; font-weight:bold; color:white; margin-bottom: 8px;">✨ Nejnovější fotka</div>
-                                <img src="${lastImage}" style="width:100%; height: 200px; object-fit:cover; border-radius:12px; border: 3px solid #4caf50; box-shadow: 0 4px 8px rgba(76, 175, 80, 0.2);">
-                            </div>
+
+                            <button onclick="generateTimelapseVideo(${plant.id}, '${plant.name}')" id="btn-gen-video" style="width:100%; margin-top:20px; padding:12px; border-radius:8px; border:none; background:#1976d2; color:white; font-size:1rem; font-weight:bold; cursor:pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s;">
+                                🎬 Vytvořit a stáhnout video ze všech fotek
+                            </button>
+                            <div id="video-status" style="text-align:center; color:#1976d2; font-size:0.85rem; margin-top:8px; display:none;">🔄 Generuji video, prosím čekejte...</div>
                         </div>
                     </div>
                 `;
 
                 document.body.appendChild(modal);
             };
+        }
+
+        // --- 2. FUNKCE: GENERÁTOR VIDEA (Nativní export) ---
+        async function generateTimelapseVideo(plantId, plantName) {
+            const btn = document.getElementById('btn-gen-video');
+            const status = document.getElementById('video-status');
+
+            // Ochrana proti dvojitému kliknutí
+            btn.style.display = 'none';
+            status.style.display = 'block';
+
+            try {
+                const db = await getDB();
+                const tx = db.transaction('plants', 'readonly');
+                const req = tx.objectStore('plants').get(plantId);
+
+                req.onsuccess = async () => {
+                    const plant = req.result;
+                    if (!plant || !plant.images || plant.images.length === 0) return;
+
+                    // Vytvoříme virtuální plátno (Canvas) v paměti (600x800 - ideální pro mobil)
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 600;
+                    canvas.height = 800;
+                    const ctx = canvas.getContext('2d');
+
+                    // Zkontrolujeme, zda prohlížeč umí nahrávat canvas (Safari na starých iOS může zlobit)
+                    if (!canvas.captureStream || typeof MediaRecorder === 'undefined') {
+                        alert('Váš prohlížeč bohužel nepodporuje přímé generování videa.');
+                        btn.style.display = 'block'; status.style.display = 'none';
+                        return;
+                    }
+
+                    // Zachytíme video stream z plátna (30 snímků za vteřinu)
+                    const stream = canvas.captureStream(30);
+                    const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+                    const chunks = [];
+
+                    recorder.ondataavailable = e => chunks.push(e.data);
+                    recorder.onstop = () => {
+                        // Spojíme data a vyrobíme stáhnutelný soubor
+                        const blob = new Blob(chunks, { type: 'video/webm' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `Casosber-${plantName.replace(/\s+/g, '_')}.webm`;
+                        a.click(); // Automaticky spustíme stahování
+
+                        // Vrátíme tlačítko do původního stavu
+                        btn.style.display = 'block';
+                        status.style.display = 'none';
+                    };
+
+                    recorder.start();
+
+                    // Projdeme postupně všechny fotky rostliny a nakreslíme je na plátno
+                    for (let imgSrc of plant.images) {
+                        const img = new Image();
+                        img.src = imgSrc;
+                        // Počkáme, až se fotka načte do paměti
+                        await new Promise(resolve => { img.onload = resolve; });
+
+                        // Nakreslíme fotku tak, aby vyplnila celé plátno (object-fit: cover efekt)
+                        const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
+                        const x = (canvas.width / 2) - (img.width / 2) * scale;
+                        const y = (canvas.height / 2) - (img.height / 2) * scale;
+
+                        // Vyčistíme a nakreslíme
+                        ctx.fillStyle = "#000";
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+
+                        // Počkáme 800 milisekund (0.8 sekundy), aby si uživatel fotku prohlédl
+                        await new Promise(r => setTimeout(r, 800));
+                    }
+
+                    // Zastavíme nahrávání (čímž se spustí recorder.onstop a stáhne se to)
+                    recorder.stop();
+                };
+            } catch (err) {
+                console.error("Chyba při generování videa:", err);
+                alert("Při generování videa nastala chyba.");
+                btn.style.display = 'block'; status.style.display = 'none';
+            }
         }
 
 
