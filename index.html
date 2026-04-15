@@ -656,10 +656,13 @@
 
         <div style="position: sticky; top: 0; background: var(--bg); z-index: 90; padding: 10px 0; margin-top: -10px;">
             <div style="display: flex; gap: 10px;">
-                <input type="text" id="search-box" placeholder="Hledat..." oninput="renderPlants()"
-                    style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 0.95rem; outline: none; box-sizing: border-box;">
-                <select class="filter-select" id="filter-category" onchange="renderPlants()"
-                    style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 0.95rem; outline: none; background: white; color: #444; box-sizing: border-box; margin: 0;">
+                <input type="text" id="search-box" placeholder="Hledat..."
+                    oninput="renderPlants(); renderGlobalPlannerContent()" ...>
+
+                <select class="filter-select" id="filter-category"
+                    onchange="renderPlants(); renderGlobalPlannerContent()" ...>
+                    style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 0.95rem;
+                    outline: none; background: white; color: #444; box-sizing: border-box; margin: 0;">
                     <option value="all">Všechny kategorie</option>
                     <option value="Pokojové">Pokojové</option>
                     <option value="Zelenina">Zelenina</option>
@@ -2901,6 +2904,10 @@ Odpověz POUZE čistým JSON formátem bez dalších textů.`;
                 let groupedTasks = {}; // Zde budeme sdružovat úkoly
                 let totalTasksCount = 0;
 
+                // 🟢 1. NAČTENÍ AKTUÁLNÍHO STAVU FILTRŮ Z OBRAZOVKY
+                const currentCategory = document.getElementById('filter-category') ? document.getElementById('filter-category').value : 'all';
+                const currentSearch = document.getElementById('search-box') ? document.getElementById('search-box').value.toLowerCase() : '';
+
                 // --- SDÍLENÁ CHYTRÁ ČISTIČKA ---
                 function getOfficialTaskName(name) {
                     const n = name.toLowerCase();
@@ -2917,6 +2924,20 @@ Odpověz POUZE čistým JSON formátem bez dalších textů.`;
                     // 🚨 PŘIDANÁ OCHRANA: Pokud úkoly neexistují, přeskočit!
                     if (!plant.tasks || !Array.isArray(plant.tasks) || plant.tasks.length === 0) return;
 
+                    // 🟢 2. PŘÍSNÝ VYHAZOVAČ (FILTR)
+                    // Kontrola kategorie
+                    if (currentCategory !== 'all') {
+                        // Převedeme kategorii na text pro jistotu a zkontrolujeme shodu
+                        const catString = String(plant.category || "");
+                        if (!catString.includes(currentCategory)) return; // Vyhodíme rostlinu z kalendáře
+                    }
+
+                    // Kontrola vyhledávání textu
+                    if (currentSearch !== '') {
+                        if (!plant.name || !plant.name.toLowerCase().includes(currentSearch)) return; // Vyhodíme rostlinu z kalendáře
+                    }
+
+                    // --- ZDE UŽ BĚŽÍ ZPRACOVÁNÍ JEN PRO TY ROSTLINY, KTERÉ PROŠLY FILTREM ---
                     plant.tasks.forEach(task => {
                         const isForViewedMonth = Array.isArray(task.months) ? task.months.includes(globalPlannerMonth) : task.month === globalPlannerMonth;
 
@@ -2948,14 +2969,11 @@ Odpověz POUZE čistým JSON formátem bez dalších textů.`;
                             }
 
                             // --- OCHRANA PROTI DUPLICITÁM ---
-                            // Zjistíme, jestli už tato rostlina v tomto úkolu je (aby se nepsalo "Jabloň, Jabloň")
                             const existingPlant = groupedTasks[taskName].plants.find(p => p.name === plant.name);
 
                             if (!existingPlant) {
-                                // Přidáme kytku do tohoto úkolu
                                 groupedTasks[taskName].plants.push({ name: plant.name, isDone: isDone });
                             } else {
-                                // Pokud už tam je, a tento dílčí úkol NENÍ hotový, musíme rostlinu označit jako nehotovou
                                 if (!isDone) {
                                     existingPlant.isDone = false;
                                 }
@@ -2976,7 +2994,6 @@ Odpověz POUZE čistým JSON formátem bez dalších textů.`;
 
                 // Nyní vykreslíme seskupené úkoly
                 for (const [taskName, taskData] of Object.entries(groupedTasks)) {
-                    // Zjistíme, zda je úkol splněn úplně pro VŠECHNY kytky
                     const allDone = taskData.plants.every(p => p.isDone);
                     let finalIcon = taskData.icon;
                     let finalStyle = taskData.textStyle;
@@ -2986,7 +3003,6 @@ Odpověz POUZE čistým JSON formátem bez dalších textů.`;
                         finalStyle = "color: #4caf50; text-decoration: line-through;";
                     }
 
-                    // Vypíšeme seznam kytek oddělený čárkou, ty splněné přeškrtneme
                     let plantList = taskData.plants.map(p => {
                         if (p.isDone) {
                             return `<span style="text-decoration: line-through; color: #4caf50;">${p.name}</span>`;
