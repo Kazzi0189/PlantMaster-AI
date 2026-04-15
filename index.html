@@ -1522,94 +1522,115 @@
                 let hasVisibleTasks = false;
 
                 // 2. FILTRACE A VYKRESLENÍ ÚKOLŮ PODLE VYBRANÉHO MĚSÍCE
+
+                // --- NOVÉ: CHYTRÁ ČISTIČKA (Normalizace názvů) ---
+                function getOfficialTaskName(name) {
+                    const n = name.toLowerCase();
+                    if (n.includes('hnoj') || n.includes('přihnoj')) return 'Hnojení';
+                    if (n.includes('škůdc') || n.includes('chorob') || n.includes('postřik') || n.includes('ošetř')) return 'Ochrana a postřiky';
+                    if (n.includes('řez') || n.includes('stříh') || n.includes('tvarov')) return 'Řez a tvarování';
+                    if (n.includes('sadb') || n.includes('sáz') || n.includes('přesaz')) return 'Přesazování / Výsadba';
+                    if (n.includes('skliz') || n.includes('sběr')) return 'Sklizeň';
+                    if (n.includes('záliv') || n.includes('zalév') || n.includes('vod')) return 'Zálivka';
+                    return 'Ostatní péče';
+                }
+
+                const tasksForThisMonth = {}; // Zde si seskupíme úkoly bez duplicit
+
                 if (plant.tasks && Array.isArray(plant.tasks)) {
+                    // KROK A: Seskupení a sloučení
                     plant.tasks.forEach(task => {
                         const isForViewedMonth = Array.isArray(task.months) ? task.months.includes(viewedMonth) : task.month === viewedMonth;
-
                         if (isForViewedMonth) {
-                            // 🟢 NOVÁ LOGIKA: Kontroluje razítko "Rok-Měsíc" a pro letošek uznává i starý formát (jen číslo)
-                            const isDone = Array.isArray(task.completedMonths) && (
-                                task.completedMonths.includes(`${viewedYear}-${viewedMonth}`) ||
-                                (viewedYear === 2026 && task.completedMonths.includes(viewedMonth))
-                            );
+                            const officialName = getOfficialTaskName(task.name);
+                            const currentDesc = task.desc || task.description || '';
 
-                            // Pokud jsme v současnosti a úkol je hotový, v aktuálním měsíci ho už normálně neukazujeme (aby nezavazel)
-                            //if (viewedMonth === currentRealMonth && isDone) return;
-
-                            hasVisibleTasks = true;
-
-                            // Logika barev a zámků (Minulost / Přítomnost / Budoucnost)
-                            let taskStyle = "border: 1px solid #ccc; background: white;";
-                            let buttonHTML = "";
-                            let statusText = "";
-
-                            // Tady kód konečně porovnává i roky, ne jen měsíce
-                            const isPast = viewedYear < currentRealYear || (viewedYear === currentRealYear && viewedMonth < currentRealMonth);
-                            const isFuture = viewedYear > currentRealYear || (viewedYear === currentRealYear && viewedMonth > currentRealMonth);
-                            const isCurrent = viewedYear === currentRealYear && viewedMonth === currentRealMonth;
-
-                            if (isPast) {
-                                // MINULOST
-                                if (!isDone) {
-                                    taskStyle = "border: 2px solid #f44336; background: #ffebee;";
-                                    statusText = "<div style='color: #d32f2f; font-weight: bold; font-size: 0.85rem; margin-bottom: 5px;'>❗ Nesplněno z minulosti</div>";
-                                    buttonHTML = `<button class="btn-complete" style="background: #ccc; cursor: not-allowed; opacity: 0.7;" disabled>Propásnuto</button>`;
-                                } else {
-                                    statusText = "<div style='color: #4caf50; font-weight: bold; font-size: 0.85rem; margin-bottom: 5px;'>✓ Splněno v termínu</div>";
-                                    buttonHTML = `<button class="btn-undo" onclick="undoTask(${plant.id}, '${task.name}')">Zrušit</button>`;
-                                }
-                            } else if (isFuture) {
-                                // BUDOUCNOST
-                                buttonHTML = `<button class="btn-complete" style="background: #ccc; cursor: not-allowed; opacity: 0.7;" disabled>Čeká na měsíc</button>`;
-                            } else if (isCurrent) {
-                                // SOUČASNOST
-                                if (isDone) {
-                                    statusText = "<div style='color: #4caf50; font-weight: bold; font-size: 0.85rem; margin-bottom: 5px;'>✓ Splněno dnes</div>";
-                                    buttonHTML = `<button class="btn-undo" onclick="undoTask(${plant.id}, '${task.name}')">Zrušit</button>`;
-                                } else {
-                                    buttonHTML = `<button class="btn-complete" onclick="completeTask(${plant.id}, '${task.name}', event)">✓ Splnit</button>`;
+                            if (!tasksForThisMonth[officialName]) {
+                                // První výskyt - vytvoříme virtuální úkol
+                                tasksForThisMonth[officialName] = JSON.parse(JSON.stringify(task)); // Hluboká kopie, abychom neměnili DB
+                                tasksForThisMonth[officialName].name = officialName; // Vnutíme oficiální název
+                                tasksForThisMonth[officialName].description = currentDesc;
+                            } else {
+                                // Duplicita nalezena - pouze připojíme popis k existujícímu úkolu
+                                if (currentDesc && !tasksForThisMonth[officialName].description.includes(currentDesc)) {
+                                    tasksForThisMonth[officialName].description += `<br><br><strong style="color:var(--p);">Další doporučení:</strong><br>${currentDesc}`;
                                 }
                             }
-                            // --- TADY KONČÍ ÚPRAVA ---
-
-                            // Sestavení boxíku pro produkty k úkolu (jen pokud úkol čeká na splnění)
-                            let productsHTML = '';
-                            if (task.taskProducts && task.taskProducts.length > 0 && viewedMonth === currentRealMonth) {
-                                productsHTML = `<div style="margin-top:10px; padding:10px; background:#f0f7f0; border-radius:8px; border:1px solid #c8e6c9;">
-                            <div style="font-size:0.8rem; font-weight:bold; color:#2e7d32; margin-bottom:5px;">💡 Doporučené přípravky pro tento úkol:</div>`;
-
-                                task.taskProducts.forEach(prod => {
-                                    productsHTML += `
-                            <div style="margin-bottom:8px; border-bottom:1px dashed #ccc; padding-bottom:8px;">
-                                <div style="font-size:0.85rem; font-weight:bold; margin-bottom:5px;">${prod}</div>
-                                <div style="display:flex; gap:5px;">
-                                    <button class="btn-shop" style="flex:1; padding:4px 8px; font-size:0.75rem;" onclick="window.open('https://www.heureka.cz/?h[fraze]=' + encodeURIComponent('${prod}'), '_blank')">🛒 Heureka</button>
-                                    <button class="btn-shop" style="flex:1; background:var(--p); color:white; padding:4px 8px; font-size:0.75rem; border:none; border-radius:4px;" onclick="window.open('https://www.google.com/search?q=' + encodeURIComponent('agromanual OR návod k použití ${prod}'), '_blank')">📖 Návod</button>
-                                </div>
-                            </div>`;
-                                });
-
-                                // --- NOVÉ TLAČÍTKO PRO SMAZÁNÍ DOPORUČENÍ ---
-                                productsHTML += `<button class="btn-sm-action" style="color:var(--warn, #d32f2f); border-color:var(--warn, #d32f2f); margin-top:10px; width:100%;" onclick="deleteTaskProducts('${task.name}')">🗑️ Smazat doporučení</button>`;
-
-                                productsHTML += `</div>`;
-                            }
-
-                            // Vykreslení samotné krabičky s úkolem
-                            tasksHTML += `
-                    <div class="task-item" style="${taskStyle} flex-direction: column; align-items: stretch; margin-bottom:10px; padding:10px;">
-                        ${statusText}
-                        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                            <strong style="font-size: 1.05rem; color: var(--p);">${task.name}</strong>
-                            ${buttonHTML}
-                        </div>
-                        <div style="font-size: 0.9rem; color: #555; margin-bottom: 8px;">
-                            ${task.desc || task.description || 'Popis úkolu chybí.'}
-                        </div>
-                        ${viewedMonth === currentRealMonth && !isDone ? `<button class="btn-sm-action" style="margin-top:0; border-color:#673ab7; color:#673ab7;" onclick="callAI('task-products', '${task.name}')">💡 Hledat přípravky k úkolu</button>` : ''}
-                        ${productsHTML}
-                    </div>`;
                         }
+                    });
+
+                    // KROK B: Vykreslení už vyčištěných úkolů
+                    Object.values(tasksForThisMonth).forEach(task => {
+                        // 🟢 NOVÁ LOGIKA: Kontroluje razítko "Rok-Měsíc" a pro letošek uznává i starý formát (jen číslo)
+                        const isDone = Array.isArray(task.completedMonths) && (
+                            task.completedMonths.includes(`${viewedYear}-${viewedMonth}`) ||
+                            (viewedYear === 2026 && task.completedMonths.includes(viewedMonth))
+                        );
+
+                        hasVisibleTasks = true;
+
+                        // Logika barev a zámků (Minulost / Přítomnost / Budoucnost)
+                        let taskStyle = "border: 1px solid #ccc; background: white;";
+                        let buttonHTML = "";
+                        let statusText = "";
+
+                        const isPast = viewedYear < currentRealYear || (viewedYear === currentRealYear && viewedMonth < currentRealMonth);
+                        const isFuture = viewedYear > currentRealYear || (viewedYear === currentRealYear && viewedMonth > currentRealMonth);
+                        const isCurrent = viewedYear === currentRealYear && viewedMonth === currentRealMonth;
+
+                        if (isPast) {
+                            if (!isDone) {
+                                taskStyle = "border: 2px solid #f44336; background: #ffebee;";
+                                statusText = "<div style='color: #d32f2f; font-weight: bold; font-size: 0.85rem; margin-bottom: 5px;'>❗ Nesplněno z minulosti</div>";
+                                buttonHTML = `<button class="btn-complete" style="background: #ccc; cursor: not-allowed; opacity: 0.7;" disabled>Propásnuto</button>`;
+                            } else {
+                                statusText = "<div style='color: #4caf50; font-weight: bold; font-size: 0.85rem; margin-bottom: 5px;'>✓ Splněno v termínu</div>";
+                                buttonHTML = `<button class="btn-undo" onclick="undoTask(${plant.id}, '${task.name}')">Zrušit</button>`;
+                            }
+                        } else if (isFuture) {
+                            buttonHTML = `<button class="btn-complete" style="background: #ccc; cursor: not-allowed; opacity: 0.7;" disabled>Čeká na měsíc</button>`;
+                        } else if (isCurrent) {
+                            if (isDone) {
+                                statusText = "<div style='color: #4caf50; font-weight: bold; font-size: 0.85rem; margin-bottom: 5px;'>✓ Splněno dnes</div>";
+                                buttonHTML = `<button class="btn-undo" onclick="undoTask(${plant.id}, '${task.name}')">Zrušit</button>`;
+                            } else {
+                                buttonHTML = `<button class="btn-complete" onclick="completeTask(${plant.id}, '${task.name}', event)">✓ Splnit</button>`;
+                            }
+                        }
+
+                        // Sestavení boxíku pro produkty k úkolu
+                        let productsHTML = '';
+                        if (task.taskProducts && task.taskProducts.length > 0 && viewedMonth === currentRealMonth) {
+                            productsHTML = `<div style="margin-top:10px; padding:10px; background:#f0f7f0; border-radius:8px; border:1px solid #c8e6c9;">
+                                <div style="font-size:0.8rem; font-weight:bold; color:#2e7d32; margin-bottom:5px;">💡 Doporučené přípravky pro tento úkol:</div>`;
+
+                            task.taskProducts.forEach(prod => {
+                                productsHTML += `
+                                <div style="margin-bottom:8px; border-bottom:1px dashed #ccc; padding-bottom:8px;">
+                                    <div style="font-size:0.85rem; font-weight:bold; margin-bottom:5px;">${prod}</div>
+                                    <div style="display:flex; gap:5px;">
+                                        <button class="btn-shop" style="flex:1; padding:4px 8px; font-size:0.75rem;" onclick="window.open('https://www.heureka.cz/?h[fraze]=' + encodeURIComponent('${prod}'), '_blank')">🛒 Heureka</button>
+                                        <button class="btn-shop" style="flex:1; background:var(--p); color:white; padding:4px 8px; font-size:0.75rem; border:none; border-radius:4px;" onclick="window.open('https://www.google.com/search?q=' + encodeURIComponent('agromanual OR návod k použití ${prod}'), '_blank')">📖 Návod</button>
+                                    </div>
+                                </div>`;
+                            });
+
+                            productsHTML += `<button class="btn-sm-action" style="color:var(--warn, #d32f2f); border-color:var(--warn, #d32f2f); margin-top:10px; width:100%;" onclick="deleteTaskProducts('${task.name}')">🗑️ Smazat doporučení</button></div>`;
+                        }
+
+                        tasksHTML += `
+                        <div class="task-item" style="${taskStyle} flex-direction: column; align-items: stretch; margin-bottom:10px; padding:10px;">
+                            ${statusText}
+                            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                <strong style="font-size: 1.05rem; color: var(--p);">${task.name}</strong>
+                                ${buttonHTML}
+                            </div>
+                            <div style="font-size: 0.9rem; color: #555; margin-bottom: 8px;">
+                                ${task.description || 'Popis úkolu chybí.'}
+                            </div>
+                            ${viewedMonth === currentRealMonth && !isDone ? `<button class="btn-sm-action" style="margin-top:0; border-color:#673ab7; color:#673ab7;" onclick="callAI('task-products', '${task.name}')">💡 Hledat přípravky k úkolu</button>` : ''}
+                            ${productsHTML}
+                        </div>`;
                     });
                 }
 
