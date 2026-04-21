@@ -603,31 +603,7 @@
             border-bottom-right-radius: 8px;
             margin-bottom: 5px;
         }
-
-        .map-zone {
-            background: rgba(255, 255, 255, 0.4);
-            border: 2px dashed #4caf50;
-            border-radius: 8px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: #2e7d32;
-            text-shadow: 0 0 5px white;
-            transition: all 0.2s;
-            position: absolute;
-            /* DŮLEŽITÉ */
-        }
-
-        .map-zone:active {
-            background: rgba(76, 175, 80, 0.7);
-            color: white;
-        }
     </style>
-</head>
-
-</style>
 </head>
 
 <body>
@@ -698,46 +674,6 @@
             </div>
         </div>
 
-        <div
-            style="position: relative; width: 100%; max-width: 600px; margin: 0 auto; overflow: hidden; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-            <img src=MIRA.png" style="width: 100%; height: auto; display: block;" alt="Mapa zahrady">
-
-            <div onclick="filterFromMap('Stromy')" class="map-zone"
-                style="position: absolute; top: 5%; left: 5%; width: 40%; height: 25%;">
-                Ovocné stromy
-            </div>
-
-            <div onclick="filterFromMap('Zelenina')" class="map-zone"
-                style="position: absolute; top: 15%; left: 65%; width: 25%; height: 15%;">
-                Skleník
-            </div>
-
-            <div onclick="filterFromMap('Bylinky')" class="map-zone"
-                style="position: absolute; top: 35%; left: 5%; width: 30%; height: 20%;">
-                Bylinky
-            </div>
-        </div>
-        <div style="text-align: center; margin: 10px 0; padding: 0 10px;">
-            <button id="toggle-map-btn" onclick="toggleMap()"
-                style="width: 100%; padding: 12px; background: #f1f8e9; border: 1px solid #4caf50; border-radius: 8px; color: #2e7d32; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                🗺️ Zobrazit mapu zahrady
-            </button>
-        </div>
-
-        <div id="map-wrapper" style="display: none; margin-bottom: 20px; padding: 0 10px;">
-            <div
-                style="position: relative; width: 100%; max-width: 600px; margin: 0 auto; overflow: hidden; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-                <img src="MIRA.jpg" style="width: 100%; height: auto; display: block;" alt="Mapa zahrady">
-
-                <div onclick="filterFromMap('Stromy')" class="map-zone"
-                    style="top: 5%; left: 5%; width: 40%; height: 25%;">Stromy</div>
-                <div onclick="filterFromMap('Zelenina')" class="map-zone"
-                    style="top: 15%; left: 65%; width: 25%; height: 15%;">Skleník</div>
-                <div onclick="filterFromMap('Bylinky')" class="map-zone"
-                    style="top: 35%; left: 5%; width: 30%; height: 20%;">Bylinky</div>
-            </div>
-        </div>
-
         <div id="inbox-section">
             <h3>📥 Nové video z YouTube</h3>
             <p id="inbox-url-display" style="font-size: 0.85rem; word-break: break-all; color: #555;"></p>
@@ -758,13 +694,18 @@
         <div id="plant-list"></div>
     </div>
 
-    <button class="fab" style="font-size: 24px;" onclick="document.getElementById('gallery-input').click()">🖼️</button>
+    <button class="fab" style="font-size: 24px; z-index: 100;"
+        onclick="document.getElementById('gallery-input').click()" title="Přidat fotku z galerie">🖼️</button>
     <input type="file" id="gallery-input" accept="image/*" style="display:none;" onchange="handleNewPlantPhoto(event)">
 
-    <button class="fab" style="bottom: 90px; background: var(--doc); font-size: 24px;"
-        onclick="document.getElementById('camera-input').click()">📷</button>
+    <button class="fab" style="bottom: 90px; background: var(--doc); font-size: 24px; z-index: 100;"
+        onclick="document.getElementById('camera-input').click()" title="Vyfotit novou rostlinu">📷</button>
     <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none;"
         onchange="handleNewPlantPhoto(event)">
+
+    <button class="fab"
+        style="bottom: 160px; background: var(--p, #2e7d32); color: white; font-size: 24px; z-index: 100;"
+        onclick="openAddPlantModal()" title="Zadat rostlinu ručně">✍️</button>
 
     <div id="detail-view">
         <div class="detail-header">
@@ -2788,6 +2729,44 @@ Odpověz POUZE čistým JSON formátem bez dalších textů.`;
         </div>
     </div>
 
+    <div id="add-plant-modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; flex-direction:column; justify-content:center; align-items:center; padding: 20px; box-sizing: border-box;">
+
+        <div
+            style="background:#fff; width:100%; max-width: 400px; border-radius:20px; padding:25px; box-sizing:border-box; position:relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+
+            <button onclick="closeAddPlantModal()"
+                style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:1.5rem; cursor:pointer; color:#666;">✖</button>
+
+            <h2
+                style="margin-top:0; color:var(--p, #2e7d32); font-size:1.5rem; border-bottom:2px solid #eee; padding-bottom:10px; text-align:center;">
+                🌱 Nová rostlina</h2>
+
+            <div style="margin-bottom: 15px; margin-top: 15px;">
+                <label for="new-plant-name"
+                    style="display:block; color:#555; font-size:0.95rem; margin-bottom:5px; font-weight:bold;">Název
+                    (např. Rajče):</label>
+                <input type="text" id="new-plant-name" placeholder="Zadej název"
+                    style="width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 12px; box-sizing: border-box; font-size: 1rem; outline: none;">
+            </div>
+
+            <div style="margin-bottom: 25px;">
+                <label for="new-plant-photo"
+                    style="display:block; color:#555; font-size:0.95rem; margin-bottom:5px; font-weight:bold;">Fotografie
+                    (volitelné):</label>
+                <input type="file" id="new-plant-photo" accept="image/*"
+                    style="width: 100%; padding: 10px; border: 2px dashed #ccc; border-radius: 12px; box-sizing: border-box; font-size: 0.9rem; background: #fafafa;">
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button onclick="saveBasicPlant()"
+                    style="flex: 1; background:var(--p, #2e7d32); color:white; border:none; border-radius:12px; padding:15px; font-size:1.1rem; cursor:pointer; font-weight:bold; box-shadow: 0 4px 10px rgba(46,125,50,0.3);">
+                    💾 Uložit rostlinu
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // --- 1. MOZEK: HYBRIDNÍ AI DOKTOR ---
         function openAIDoctorModal() {
@@ -3581,39 +3560,77 @@ Odpověz POUZE čistým JSON formátem bez dalších textů.`;
                 btn.style.display = 'block'; status.style.display = 'none';
             }
         }
-        function filterFromMap(categoryName) {
-            const filterEl = document.getElementById('filter-category');
-            if (filterEl) {
-                filterEl.value = categoryName; // Nastaví roletku
-                // Spustí překreslení, které už máme v aplikaci hotové
-                renderPlants();
-                if (typeof renderGlobalPlannerContent === 'function') renderGlobalPlannerContent();
-                if (typeof renderGroupedTasks === 'function') renderGroupedTasks(allPlantsGlobal); // Pokud máš globální proměnnou s rostlinami
-            }
-        }
-        // Funkce pro schování a ukázání mapy
-        function toggleMap() {
-            const wrapper = document.getElementById('map-wrapper');
-            const btn = document.getElementById('toggle-map-btn');
 
-            if (wrapper.style.display === 'none') {
-                wrapper.style.display = 'block';
-                btn.innerHTML = '📂 Skrýt mapu zahrady';
-            } else {
-                wrapper.style.display = 'none';
-                btn.innerHTML = '🗺️ Zobrazit mapu zahrady';
-            }
+        // --- FUNKCE PRO OTEVŘENÍ/ZAVŘENÍ MODÁLU ---
+        function openAddPlantModal() {
+            document.getElementById('add-plant-modal').style.display = 'flex';
         }
 
-        // Funkce pro filtrování kliknutím do mapy
-        function filterFromMap(categoryName) {
-            const filterEl = document.getElementById('filter-category');
-            if (filterEl) {
-                filterEl.value = categoryName;
-                // Spustíme všechna překreslení, která už v kódu máš
-                renderPlants();
-                if (typeof renderGlobalPlannerContent === 'function') renderGlobalPlannerContent();
-                if (typeof renderGroupedTasks === 'function') renderGroupedTasks(allPlantsGlobal);
+        function closeAddPlantModal() {
+            document.getElementById('add-plant-modal').style.display = 'none';
+            // Vyčistíme inputy po zavření
+            document.getElementById('new-plant-name').value = '';
+            document.getElementById('new-plant-photo').value = '';
+        }
+
+        // --- FUNKCE PRO ULOŽENÍ NOVÉ ROSTLINY ---
+        async function saveBasicPlant() {
+            const nameInput = document.getElementById('new-plant-name');
+            const photoInput = document.getElementById('new-plant-photo');
+            const name = nameInput.value.trim();
+
+            // Validace: Název je povinný
+            if (!name) {
+                alert("Prosím, zadej alespoň název rostliny.");
+                return;
+            }
+
+            showLoader("Ukládám rostlinu..."); // Používáme tvůj existující loader
+
+            // Příprava základního objektu pro tvou databázi
+            const newPlant = {
+                id: Date.now(),
+                name: name,
+                images: [],
+                category: "Neznámá", // AI to později upraví
+                needsAICare: true, // ✨ TOTO JE NÁŠ NOVÝ UKAZATEL!
+                wateringPaused: false,
+                lastWatered: null
+            };
+
+            // Pokud uživatel vybral i fotku, převedeme ji na Base64
+            if (photoInput.files && photoInput.files[0]) {
+                const file = photoInput.files[0];
+                const base64Image = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.readAsDataURL(file);
+                });
+                newPlant.images.push(base64Image);
+            }
+
+            try {
+                // Uložení do IndexedDB (využívám tvůj getDB a stejný postup jako máš v callAI)
+                const db = await getDB();
+                const tx = db.transaction('plants', 'readwrite');
+                const store = tx.objectStore('plants');
+
+                store.put(newPlant);
+
+                tx.oncomplete = () => {
+                    hideLoader();
+                    closeAddPlantModal();
+                    renderPlants(); // Ihned překreslíme hlavní stránku
+                };
+
+                tx.onerror = (e) => {
+                    throw e.target.error;
+                };
+
+            } catch (error) {
+                hideLoader();
+                console.error("Chyba při ukládání rostliny:", error);
+                alert("Nepodařilo se uložit rostlinu.");
             }
         }
 
